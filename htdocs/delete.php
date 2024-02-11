@@ -1,14 +1,29 @@
 <?php
 include 'db.php';
 
-$id = $conn->real_escape_string($_POST['id']);
+$_POST = json_decode(file_get_contents('php://input'), true);
 
-$sql = "DELETE FROM Alumni WHERE id=$id";
+// Assuming 'id' is always an integer
+$id = isset($_POST['id']) ? (int) $_POST['id'] : 0;
 
-if ($conn->query($sql) === TRUE) {
-    echo "Record deleted successfully";
+// Prepared statement
+$sql = "DELETE FROM Alumni WHERE id = ?";
+
+// Prepare
+$stmt = $conn->prepare($sql);
+
+// Bind and execute
+if ($stmt) {
+    $stmt->bind_param("i", $id); // "i" denotes the type is "integer"
+    if ($stmt->execute()) {
+        echo "Record {$id} deleted successfully";
+    } else {
+        echo "Error deleting record: " . $stmt->error;
+    }
+    $stmt->close();
 } else {
-    echo "Error deleting record: " . $conn->error;
+    echo "Error preparing statement: " . $conn->error;
 }
 
 $conn->close();
+?>
